@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { getDailyLogs, getDailyLogByDate, saveDailyLog, formatDate, type DailyLog } from "@/lib/storage"
 
 export function useDailyLogs() {
@@ -38,12 +38,12 @@ export function useDailyLogs() {
     }
   }, [])
 
-  const getLogByDate = (date: Date | string) => {
+  const getLogByDate = useCallback((date: Date | string) => {
     const dateString = typeof date === "string" ? date : formatDate(date)
     return getDailyLogByDate(dateString)
-  }
+  }, [])
 
-  const saveLog = (logData: Omit<DailyLog, "id" | "createdAt" | "updatedAt">) => {
+  const saveLog = useCallback((logData: Omit<DailyLog, "id" | "createdAt" | "updatedAt">) => {
     try {
       const savedLog = saveDailyLog(logData)
 
@@ -63,17 +63,20 @@ export function useDailyLogs() {
       console.error("Error saving daily log:", error)
       throw error
     }
-  }
+  }, [])
 
-  const getTodaysLog = () => {
+  const getTodaysLog = useCallback(() => {
     const today = formatDate(new Date())
     return logs.find((log) => log.date === today) || null
-  }
+  }, [logs])
 
-  const getRecentLogs = (days = 7) => {
-    const sortedLogs = logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    return sortedLogs.slice(0, days)
-  }
+  const getRecentLogs = useCallback(
+    (days = 7) => {
+      const sortedLogs = logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      return sortedLogs.slice(0, days)
+    },
+    [logs],
+  )
 
   return {
     logs,

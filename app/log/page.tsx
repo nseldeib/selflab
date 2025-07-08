@@ -24,35 +24,42 @@ export default function LogPage() {
   const [notes, setNotes] = useState("")
   const [protocols, setProtocols] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState(false)
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   const { getLogByDate, saveLog } = useDailyLogs()
   const { getActiveExperiments } = useExperiments()
 
-  const activeExperiments = getActiveExperiments()
-
   // Load existing log data when date changes
   useEffect(() => {
-    const existingLog = getLogByDate(selectedDate)
-    if (existingLog) {
-      setSleepHours([existingLog.sleepHours])
-      setMood(existingLog.mood)
-      setEnergy([existingLog.energy])
-      setNotes(existingLog.notes)
-      setProtocols(existingLog.protocols)
-    } else {
-      // Reset form for new date
-      setSleepHours([7])
-      setMood("")
-      setEnergy([7])
-      setNotes("")
-      // Initialize protocols for active experiments
-      const initialProtocols: Record<string, boolean> = {}
-      activeExperiments.forEach((exp) => {
-        initialProtocols[exp.id] = false
-      })
-      setProtocols(initialProtocols)
+    const loadLogData = () => {
+      const dateString = formatDate(selectedDate)
+      const existingLog = getLogByDate(dateString)
+      const activeExperiments = getActiveExperiments()
+
+      if (existingLog) {
+        setSleepHours([existingLog.sleepHours])
+        setMood(existingLog.mood)
+        setEnergy([existingLog.energy])
+        setNotes(existingLog.notes)
+        setProtocols(existingLog.protocols || {})
+      } else {
+        // Reset form for new date
+        setSleepHours([7])
+        setMood("")
+        setEnergy([7])
+        setNotes("")
+        // Initialize protocols for active experiments
+        const initialProtocols: Record<string, boolean> = {}
+        activeExperiments.forEach((exp) => {
+          initialProtocols[exp.id] = false
+        })
+        setProtocols(initialProtocols)
+      }
+      setDataLoaded(true)
     }
-  }, [selectedDate, getLogByDate, activeExperiments])
+
+    loadLogData()
+  }, [selectedDate]) // Only depend on selectedDate
 
   const moodOptions = [
     { emoji: "😢", label: "Very Low", value: "very-low" },
@@ -82,6 +89,27 @@ export default function LogPage() {
     }
   }
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date)
+      setDataLoaded(false) // Reset data loaded state when date changes
+    }
+  }
+
+  // Don't render until data is loaded to prevent hydration issues
+  if (!dataLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600 mt-2">Loading log data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const activeExperiments = getActiveExperiments()
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
@@ -101,12 +129,7 @@ export default function LogPage() {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                initialFocus
-              />
+              <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} initialFocus />
             </PopoverContent>
           </Popover>
         </div>
