@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useAppData } from "@/hooks/use-app-data"
 import { useDailyLogs } from "@/hooks/use-daily-logs"
 import { useExperiments } from "@/hooks/use-experiments"
+import { WikiWidget } from "@/components/wiki-widget"
 
 export default function Dashboard() {
   const { stats, initialized } = useAppData() // Removed refreshStats from destructuring
@@ -97,7 +98,7 @@ export default function Dashboard() {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Today's Log Preview */}
         <Card className="border-0 shadow-sm">
           <CardHeader>
@@ -205,6 +206,16 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Personal Wiki Widget */}
+        <div className="lg:col-span-1">
+          <WikiWidget />
+        </div>
+      </div>
+
+      {/* Full-width Wiki Widget for larger screens */}
+      <div className="lg:hidden">
+        <WikiWidget />
       </div>
     </div>
   )
